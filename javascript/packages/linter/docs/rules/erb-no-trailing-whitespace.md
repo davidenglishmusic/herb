@@ -4,7 +4,9 @@
 
 ## Description
 
-Disallow trailing whitespace (spaces, tabs, carriage returns, and other whitespace characters) at the end of lines in ERB templates.
+Disallow trailing whitespace (spaces, tabs, and other whitespace characters) at the end of lines in ERB templates.
+
+Both LF and CRLF line endings are supported. The carriage return of a CRLF line ending is not treated as trailing whitespace, and the autocorrection keeps each line's existing line ending.
 
 ## Skipped Content
 

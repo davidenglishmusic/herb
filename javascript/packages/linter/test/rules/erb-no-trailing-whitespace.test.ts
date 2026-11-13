@@ -319,6 +319,25 @@ describe("erb-no-trailing-whitespace", () => {
     })
   })
 
+  describe("line endings", () => {
+    test("does not flag CRLF line endings", () => {
+      expectNoOffenses("<div>\r\n  <p>Hello</p>\r\n</div>\r\n")
+    })
+
+    test("flags trailing whitespace before CRLF without including the carriage return", () => {
+      expectError("Extra whitespace detected at end of line.", { line: 1, column: 5, endLine: 1, endColumn: 7 })
+
+      assertOffenses("<div>  \r\n  <p>Hello</p>\r\n</div>\r\n")
+    })
+
+    test("flags trailing whitespace on lines with either line ending", () => {
+      expectError("Extra whitespace detected at end of line.", [1, 1])
+      expectError("Extra whitespace detected at end of line.", [2, 1])
+
+      assertOffenses("a \r\nb \nc\r\n")
+    })
+  })
+
   describe("offense metadata", () => {
     test("populates code and source like every other rule", async () => {
       await Herb.load()

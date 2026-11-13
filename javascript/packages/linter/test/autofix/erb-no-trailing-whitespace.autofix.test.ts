@@ -699,15 +699,50 @@ describe("erb-no-trailing-whitespace autofix", () => {
     })
 
     describe("line endings", () => {
-      test("strips carriage returns inside tags and text alike", () => {
+      test("keeps CRLF line endings that have no trailing whitespace", () => {
         const input = '<div data-a="foo"\r\n  data-b="bar">\r\nlorem\r\n</div>\r\n'
-        const expected = '<div data-a="foo"\n  data-b="bar">\nlorem\n</div>\n'
+
+        const linter = new Linter(Herb, [ERBNoTrailingWhitespaceRule])
+        const result = linter.autofix(input, { fileName: "test.html.erb" })
+
+        expect(result.source).toBe(input)
+        expect(result.fixed).toHaveLength(0)
+        expect(result.unfixed).toHaveLength(0)
+      })
+
+      test("removes trailing whitespace before CRLF inside tags and text alike", () => {
+        const input = '<div data-a="foo"  \r\n  data-b="bar">\t\r\nlorem \r\n</div>  \r\n'
+        const expected = '<div data-a="foo"\r\n  data-b="bar">\r\nlorem\r\n</div>\r\n'
 
         const linter = new Linter(Herb, [ERBNoTrailingWhitespaceRule])
         const result = linter.autofix(input, { fileName: "test.html.erb" })
 
         expect(result.source).toBe(expected)
         expect(result.fixed).toHaveLength(4)
+        expect(result.unfixed).toHaveLength(0)
+      })
+
+      test("removes whitespace from a CRLF line that is only whitespace", () => {
+        const input = "a line\r\n      \r\nanother line\r\n"
+        const expected = "a line\r\n\r\nanother line\r\n"
+
+        const linter = new Linter(Herb, [ERBNoTrailingWhitespaceRule])
+        const result = linter.autofix(input, { fileName: "test.html.erb" })
+
+        expect(result.source).toBe(expected)
+        expect(result.fixed).toHaveLength(1)
+        expect(result.unfixed).toHaveLength(0)
+      })
+
+      test("keeps each line's own ending when LF and CRLF are mixed", () => {
+        const input = "a \r\nb \nc \r\n"
+        const expected = "a\r\nb\nc\r\n"
+
+        const linter = new Linter(Herb, [ERBNoTrailingWhitespaceRule])
+        const result = linter.autofix(input, { fileName: "test.html.erb" })
+
+        expect(result.source).toBe(expected)
+        expect(result.fixed).toHaveLength(3)
         expect(result.unfixed).toHaveLength(0)
       })
     })

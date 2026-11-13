@@ -8,6 +8,7 @@ import type { UnboundLintOffense, LintOffense, LintContext, FullRuleConfig } fro
 import type { HTMLElementNode, HTMLTextNode, LiteralNode, WhitespaceNode, ParseResult, DocumentNode, ERBNode } from "@herb-tools/core"
 
 const WHITESPACE_CHARACTERS = new Set([" ", "\t", "\r", "\v", "\f", "\u00A0"])
+const LINE_ENDING = /\r?\n/
 
 function trailingWhitespaceStart(value: string): number {
   let start = value.length
@@ -23,13 +24,19 @@ function trimTrailingWhitespace(value: string): string {
   return start === value.length ? value : value.slice(0, start)
 }
 
+function trimTrailingWhitespaceBeforeNewline(line: string): string {
+  if (!line.endsWith("\r")) return trimTrailingWhitespace(line)
+
+  return trimTrailingWhitespace(line.slice(0, -1)) + "\r"
+}
+
 function trimWhitespaceBeforeNewlines(value: string): string {
   if (!value.includes("\n")) return value
 
   const segments = value.split("\n")
 
   for (let index = 0; index < segments.length - 1; index++) {
-    segments[index] = trimTrailingWhitespace(segments[index])
+    segments[index] = trimTrailingWhitespaceBeforeNewline(segments[index])
   }
 
   return segments.join("\n")
@@ -111,7 +118,7 @@ export class ERBNoTrailingWhitespaceRule extends ParserRule<ERBNoTrailingWhitesp
 
   check(result: ParseResult, _context?: Partial<LintContext>): UnboundLintOffense<ERBNoTrailingWhitespaceAutofixContext>[] {
     const offenses: UnboundLintOffense<ERBNoTrailingWhitespaceAutofixContext>[] = []
-    const lines = result.source.split("\n")
+    const lines = result.source.split(LINE_ENDING)
     const candidates = this.findTrailingWhitespaceCandidates(lines)
 
     if (candidates.length === 0) return offenses
